@@ -1,3 +1,8 @@
+cats.csv
+dogs.csv
+config.py
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

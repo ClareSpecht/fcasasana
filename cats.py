@@ -18,12 +18,13 @@ import Audit
 import asana
 import datetime
 import pandas as pd
-client = asana.Client.access_token('1/1201237139653173:efc34af6c6ee78fe0c4de04b2ea0260a')
+import config
+client = asana.Client.access_token(config.token)
 
-fosterpath = 'fosterdata (4).csv'
-HWPath = 'heartworm positive in shelter 9.10.22.csv'
-InventoryPath = 'asana (69).csv'
-OutcomePath = 'outcomes 9.9-9.10.csv'
+fosterpath = 'foster report (68).csv'
+#HWPath = 'hw+ (61).csv'
+InventoryPath = 'inventory 3.31.23.csv'
+#OutcomePath = 'outcomes 9.9-9.10.csv'
 
 sxdict = {
     "M": "1200936046736380",
@@ -201,7 +202,7 @@ def createMissingDogs():
             print("completed")
             row['completed'] = 'False'
         else:
-            if "DOMESTIC" in row['description'] or "TABBY" in row['description'] or "SIAMESE" in row['description'] or "SPHYNX" in row['description'] or "TURKISH ANGORA" in row['description']:
+            if "DOMESTIC" in row['description'] or "TABBY" in row['description'] or "SIAMESE" in row['description'] or "RUSSIAN BLUE" in row['description'] or "PERSIAN" in row['description'] or "SPHYNX" in row['description'] or "TURKISH ANGORA" in row['description']:
                 if "FREEZER" in row['Kennel']:
                     continue            
                 print("not found")
@@ -299,7 +300,6 @@ def getOpenTaskList():
 
 print(InventoryPath)
 print(fosterpath)
-print(HWPath)
 print("create missing cats")
 createMissingDogs()
 createMissingFosters()

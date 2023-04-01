@@ -8,10 +8,11 @@ import threading
 import queue
 from datetime import date
 import Audit
+import config
 import asana
 import datetime
 import pandas as pd
-client = asana.Client.access_token('1/1201237139653173:efc34af6c6ee78fe0c4de04b2ea0260a')
+client = asana.Client.access_token(config.token)
 client.headers={"asana-enable": "new_user_task_lists"}
 Audit.setClientWithToken(client)
 
@@ -196,19 +197,16 @@ def doAudit():
     return "create"
 
 def runNext(crnt):
-    mp = {"create" : inventory, 
-    "inventory" : inCare}
-
-    # mp = {"create" : pictures, 
-    # "pictures" : subclean,
-    # "subclean" :inventory, 
-    # "inventory" : website,
-    # "website" : foster,
-    # "foster" : RTG,
-    # "RTG" : BT,
-    # "BT": MT,
-    # "MT" : inCare,
-    # "inCare" : HW}
+    mp = {"create" : pictures, 
+    "pictures" : subclean,
+    "subclean" :inventory, 
+    "inventory" : website,
+    "website" : foster,
+    "foster" : RTG,
+    "RTG" : BT,
+    "BT": MT,
+    "MT" : inCare,
+    "inCare" : HW}
 
     if crnt in mp:
         fnct = mp[crnt]

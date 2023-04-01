@@ -5,6 +5,7 @@ import json
 import asana
 import datetime
 import csv
+import config
 from urllib.request import urlopen
 
 fosterpath = ''
@@ -41,6 +42,7 @@ reasondict = {
     "NEED RES" : "1202691366791659",
     "DOG TEST" : "1202865798846638",
     "UNDERAGE/W" : "1202865777613524",
+    "HOLDNOTIFY" : "1204295300113467",
     "":None
 }
 holddict = {
@@ -56,69 +58,8 @@ sxdict = {
     "U": "1200936046736384"}
 lvldict = {
     "L1": "1201130160371746",
-    "L1- HOUSE SINGULARLY": "1201130160371746",
-    "L1 M&G": "1201130160371746",
-    "L1 OD": "1201470012619896",
-    "L1 ONLY DOG": "1201470012619896",
-    "L1-ONLY DOG": "1201470012619896",
-    "L1/ DOG TO DOG M&G": "1201130160371772",
-    "L1/DOG TO DOG M&G": "1201130160371759",
-    "L1 / OD RG": "1201130160371767",
     "L2": "1201130160371751",
-    "L2 SF/OA": "1201130160371751",
-    "L2/BH&SF": "1201130160371751",
-    "L2/FA": "1201130160371751",
-    "L2/BR": "1201130160371751",
-    "L2-BR": "1201130160371751",
-    "L2 A": "1201130160371751",
-    "L2 -A": "1201130160371751",
-    "L2 BH": "1201256626521417",
-    "L2/BH": "1201256626521417",
-    "L2/H": "1201130160371766",
-    "L2 H": "1201130160371766",
-    "L2 - H": "1201130160371766",
-    "L2 LR/OD": "1201130160371770",
-    "L2 OA": "1201130160371748",
-    "L2/OA": "1201130160371748",
-    "L2/0A": "1201130160371748",
-    "L2 A/OA": "1201130160371748",
-    "L2/H&OA": "1201130160371760",
-    "L2 OA/H": "1201130160371760",
-    "L2/SF": "1201130160371747",
-    "L2 RG": "1201130160371758",
-    "L2-RG BH": "1201130160371758",
-    "L2/RG&OA": "1201197823350958",
-    "L2/OA&RG": "1201197823350958",
-    "L2/SD": "1201130160371762",
-    "L2 SF": "1201130160371761",
-    "L2 SF/H": "1201130160371761",
-    "L2 LR": "1201130160371765",
-    "L2/RG": "1201130160371752",
-    "L2/LR": "1201130160371771",
-    "L2/LR&H": "1201130160371771",
-    "L2 SF/A": "1201423946196211",
     "L3" : "1201774420671246",
-    "L3 SD": "1201130160371749",
-    "L3/SD": "1201130160371749",
-    "L3/BH&SF": "1201130160371750",
-    "L3/SF": "1201130160371753",
-    "L3 SF/BH": "1201130160371753",
-    "L3 SF": "1201130160371754",
-    "L3 / SF": "1201130160371754",
-    "L3 SF/RG": "1201130160371754",
-    "L3/SF/A": "1201130160371754",
-    "L3 S/F": "1201130160371754",
-    "L3-OA": "1201130160371755",
-    "L3 OA": "1201130160371755",
-    "L3 LR/OA": "1201130160371755",
-    "L3 RG/OA/OD": "1201130160371757",
-    "L3/OA": "1201130160371763",
-    "L3/LR": "1201130160371764",
-    "L3 DR/OD": "1201130160371768",
-    "L3/OA&RG": "1201130160371769",
-    "L3/RG&OA": "1201130160371769",
-    "L3/RG": "1201130160371769",
-    "L3 RG": "1201130160371769",
     "STAFF ONLY": "1201130160371756",
     "":None
 }
@@ -130,8 +71,8 @@ def setClientWithToken(clientjson):
 def setClient():
     global client 
     client = asana.Client.oauth(
-    client_id= '1201717215494269',
-    client_secret='a61c8e125cc10df7dcf8ce1ad797e215',
+    config.client_id,
+    config.client_secret,
     redirect_uri='https://127.0.0.1:5000/callback'
     )
     client.headers={"asana-enable": "new_user_task_lists"}
@@ -948,7 +889,11 @@ def createMissingDogs():
                 continue
             if "SIAMESE" in row['description']:
                 continue
+            if "PERSIAN" in row['description']:
+                continue
             if "SPHYNX" in row['description']:
+                continue
+            if "RUSSIAN BLUE" in row['description']:
                 continue
             if "PIG" in row['description']:
                 continue
@@ -975,11 +920,16 @@ def createMissingDogs():
             if "DUCK" in row['description']:
                 continue    
             if "TURKEY" in row['description']:
-                continue      
+                continue     
+            if "BIRD" in row['description']:
+                continue  
             if "GOAT" in row['description']:
-                continue  
+                continue
+            if "POSSUM" in row['description']:
+                continue   
             if "RAT" in row['description']:
-                continue  
+                if "TERRIER" not in row['description']:
+                    continue  
             
             #print("not found")
             #print(row)
