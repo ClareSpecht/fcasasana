@@ -200,12 +200,19 @@ def getUnsortedMT():
     found = True
     last_date = (datetime.datetime.now() + datetime.timedelta(days=1)).isoformat() 
     results = []
+    # resulti = client.tasks.search_tasks_for_workspace('1176075726005695', {'sections.any' : '1203753702613364', 'limit':50, 'completed':False, 'is_subtask':False, 'opt_fields' : ['completed', 'name']}, opt_pretty=True)
+    # info = []
+    # for dog in resulti:
+    #     info.append(dog['gid'])
     while found:
         result = client.tasks.search_tasks_for_workspace('1176075726005695', {'projects.any':'1203676631198131', 'created_at.before' : last_date, 'sort_by':"created_at", 'limit':50, 'completed':False, 'is_subtask':False, 'opt_fields' : ['custom_fields.name', 'custom_fields.display_value', 'completed', 'name', 'permalink_url', 'created_at']}, opt_pretty=True)
         found = False
         for r in result:
             found = True
             last_date = r["created_at"]
+            # if r['gid'] in info:
+            #     continue
+            # else:
             results.append(r)
     dgs = []
     for task in results:
@@ -529,6 +536,8 @@ def moveMT():
             result = client.tasks.add_project_for_task(dog['gid'], {'project': '1203676631198131','section': '1203676631198142'}, opt_pretty=True)
         elif kennel.startswith('Foster'):
             result = client.tasks.add_project_for_task(dog['gid'], {'project': '1203676631198131','section': '1203676631198148'}, opt_pretty=True)
+        else:
+            result = client.tasks.remove_project_for_task(dog['gid'], {'project': '1203676631198131'}, opt_pretty=True)
 
 def getUnsortedWB():
     print(client) 
@@ -719,8 +728,6 @@ def updateFromWebsite():
                 #print("updating "+row['Animal ID'] )
                 dog = dogMap[row['Animal ID']]
                 task_gid = row['gid']
-                if (dog['name'] != row['name']):
-                    t = client.tasks.update_task(task_gid, {'name' : dog['name'],'custom_fields':{'1201541077622257': dog['size_number']}}, opt_pretty=True)
                 t = client.tasks.update_task(task_gid, {'custom_fields':{'1201541077622257': dog['size_number']}}, opt_pretty=True)
     except Exception as e:
         print(e)        
@@ -728,10 +735,9 @@ def updateFromWebsite():
 def addPicturesToNewDogs():
     try:
         client.headers={"asana-enable": "new_user_task_lists"}
-        newdogs = client.tasks.search_tasks_for_workspace('1176075726005695', {'projects.any':'1200600287945473','has_attachment' :False, 'limit':50, 'is_subtask':False, 'opt_fields' : ['custom_fields.name', 'custom_fields.display_value', 'completed', 'name', 'permalink_url', 'created_at']}, opt_pretty=True)
+        newdogs = client.tasks.search_tasks_for_workspace('1176075726005695', {'projects.any':'1200600287945473','has_attachment' :False, 'limit':50, 'is_subtask':False, 'opt_fields' : ['custom_fields.name', 'custom_fields.display_value', 'completed', 'name', 'permalink_url']}, opt_pretty=True)
         dogMap = getWebsiteList()
         for r in newdogs:
-            last_date2 = r["created_at"]
             dg = {}
             dg['completed'] = r['completed']
             dg['name'] = r['name']
@@ -782,7 +788,7 @@ def updateFromInventory():
                             custom_fields['1201130160371745'] = lvldict["STAFF ONLY"]
                             custom_fields['1201718837086260'] = row['level'].replace("STAFF ONLY", "").replace(" ", "")
                     try:
-                        t = client.tasks.update_task(task_gid, {'custom_fields':custom_fields}, opt_pretty=True)
+                        t = client.tasks.update_task(task_gid, {'name': row['name'],'custom_fields':custom_fields}, opt_pretty=True)
                         result = client.tasks.get_subtasks_for_task(task_gid, {'limit':50, 'opt_fields' : ['custom_fields.name', 'custom_fields.display_value', 'completed', 'name', 'permalink_url', 'created_at']}, opt_pretty=True)
                         for r in result:
                             if r['completed'] == True:
@@ -918,7 +924,9 @@ def createMissingDogs():
             if "LIZARD" in row['description']:
                 continue     
             if "DUCK" in row['description']:
-                continue    
+                continue  
+            if "GOOSE" in row['description']:
+                continue  
             if "TURKEY" in row['description']:
                 continue     
             if "BIRD" in row['description']:

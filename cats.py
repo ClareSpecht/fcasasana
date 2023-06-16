@@ -16,15 +16,17 @@ import csv
 from urllib.request import urlopen
 import Audit
 import asana
-import datetime
+from datetime import date
 import pandas as pd
 import config
 client = asana.Client.access_token(config.token)
 
-fosterpath = 'foster report (68).csv'
+fosterpath = 'foster inventory 6.15.23.csv'
 #HWPath = 'hw+ (61).csv'
-InventoryPath = 'inventory 3.31.23.csv'
+InventoryPath = 'inventory 6.15.23.csv'
 #OutcomePath = 'outcomes 9.9-9.10.csv'
+today = str(date.today())
+tempupdate = client.tasks.update_task('1204779649606424', {'due_on':today}, opt_pretty=True)
 
 sxdict = {
     "M": "1200936046736380",
@@ -143,8 +145,8 @@ def getOpenTasks():
             dg['breed_secondary_name'] = d['breed_secondary_name']
             dg['specie_name'] = d['specie_name']
             dg['picture'] = d['picture']
-        else:
-            print(str(code) + " Not Found on website")
+        # else:
+            # print(str(code) + " Not Found on website")
             #print(dg)
         dgs.append(dg)
         #print(dg)
@@ -160,8 +162,8 @@ def getInventoryDogsNotInAsana():
             for row in csvReader:         
                 if row['AID'] not in dogMap2:
                     notinasana.append(row)
-                    print('Not in Asana')
-                    print(row)
+                    # print('Not in Asana')
+                    # print(row)
             return notinasana
     except Exception as e:
         print(e)        
@@ -199,16 +201,18 @@ def createMissingDogs():
         completedDogs[code] = dg #AID
     for row in notinasana:  
         if row['AID'] in completedDogs:
-            print("completed")
+            # print("completed")
             row['completed'] = 'False'
         else:
             if "DOMESTIC" in row['description'] or "TABBY" in row['description'] or "SIAMESE" in row['description'] or "RUSSIAN BLUE" in row['description'] or "PERSIAN" in row['description'] or "SPHYNX" in row['description'] or "TURKISH ANGORA" in row['description']:
                 if "FREEZER" in row['Kennel']:
                     continue            
-                print("not found")
-                print(row)
+                # print("not found")
+                # print(row)
                 try:
-                    result = client.tasks.create_task({'projects': ["1201839537137803"], 'workspace': "1176075726005695",'name': row['name'],'custom_fields':{'1200935881386208': row['Kennel'], '1200601343822614' : row['Age'],'1201130160371728': reasondict[row['reason']], '1201130160371724' : holddict[row['hold?']], '1200936046736379': sxdict[row['sx']], '1200601343822598' : row['AID'],'1200936046736386' : row['dob'],'1201248320001333' : row['intake date'],'1200601343822608' : row['description']}}, opt_pretty=True)
+                    result = client.tasks.duplicate_task('1204779649606422', {'include':["assignee","subtasks","projects","dependencies","dates"],'name': row['name']}, opt_pretty=True)
+                    taskupdate = client.tasks.update_task(result['new_task']['gid'],{'custom_fields':{'1200935881386208': row['Kennel'], '1200601343822614' : row['Age'],'1201130160371728': reasondict[row['reason']], '1201130160371724' : holddict[row['hold?']], '1200936046736379': sxdict[row['sx']], '1200601343822598' : row['AID'],'1200936046736386' : row['dob'],'1201248320001333' : row['intake date'],'1200601343822608' : row['description']}}, opt_pretty=True)
+                    #result = client.tasks.create_task({'projects': ["1201839537137803"], 'workspace': "1176075726005695",'name': row['name'],'custom_fields':{'1200935881386208': row['Kennel'], '1200601343822614' : row['Age'],'1201130160371728': reasondict[row['reason']], '1201130160371724' : holddict[row['hold?']], '1200936046736379': sxdict[row['sx']], '1200601343822598' : row['AID'],'1200936046736386' : row['dob'],'1201248320001333' : row['intake date'],'1200601343822608' : row['description']}}, opt_pretty=True)
                 except Exception as e:
                     print(e)
 
@@ -259,10 +263,12 @@ def createMissingFosters():
             #print("completed")
             row['completed'] = 'False'
         elif row['animal_type'] == 'CAT':           
-            print("not found")
-            print(row)
+            # print("not found")
+            # print(row)
             try:
-                result = client.tasks.create_task({'projects': "1201839537137803", 'workspace': "1176075726005695",'name': row['animal name'],'custom_fields':{'1200935881386208': 'Foster', '1200601343822614' : row['years_old'] + ' years ' + row['months_old'] + ' months', '1200936046736379': sxdict[row['sex']], '1200601343822598' : row['animal_id'], '1200601343822608' : row['animal breed']}}, opt_pretty=True)
+                result = client.tasks.duplicate_task('1204779649606422', {'include':["assignee","subtasks","projects","dependencies","dates"],'name': row['animal name']}, opt_pretty=True)
+                taskupdate = client.tasks.update_task(result['new_task']['gid'],{'custom_fields':{'1200935881386208': 'Foster', '1200601343822614' : row['years_old'] + ' years ' + row['months_old'] + ' months', '1200936046736379': sxdict[row['sex']], '1200601343822598' : row['animal_id'], '1200601343822608' : row['animal breed']}}, opt_pretty=True)
+                # result = client.tasks.create_task({'projects': "1201839537137803", 'workspace': "1176075726005695",'name': row['animal name'],'custom_fields':{'1200935881386208': 'Foster', '1200601343822614' : row['years_old'] + ' years ' + row['months_old'] + ' months', '1200936046736379': sxdict[row['sex']], '1200601343822598' : row['animal_id'], '1200601343822608' : row['animal breed']}}, opt_pretty=True)
             except Exception as e:
                 print(e)  
 
@@ -285,13 +291,13 @@ def getOpenTaskList():
         dg['name'] = task['name']
         dg['permalink_url'] = task['permalink_url']
         membership = task['memberships']
-        print(membership)
+        # print(membership)
         for m in membership:
             dg[m['section']['project']['name']+' membership'] = m['section']['name']
         dg['gid'] = task['gid'] 
         for fld in task['custom_fields']:
             dg[fld['name']] = fld['display_value'] 
-            print(dg[fld['name']])
+            # print(dg[fld['name']])
         code = dg['Animal ID']
         if code == None:
             continue
@@ -310,11 +316,11 @@ try:
     allDogs = getOpenTaskList()
     for row in allDogs:
         if row['Animal ID'] in dogMap:
-            print("updating "+row['Animal ID'] )
+            # print("updating "+row['Animal ID'] )
             dog = dogMap[row['Animal ID']]
             task_gid = row['gid']
-            if (dog['name'] != row['name']):
-                t = client.tasks.update_task(task_gid, {'name' : dog['name'],'custom_fields':{'1201541077622257': dog['size_number']}}, opt_pretty=True)
+            # if (dog['name'] != row['name']):
+            #     t = client.tasks.update_task(task_gid, {'name' : dog['name'],'custom_fields':{'1201541077622257': dog['size_number']}}, opt_pretty=True)
             t = client.tasks.update_task(task_gid, {'custom_fields':{'1201541077622257': dog['size_number']}}, opt_pretty=True)
 except Exception as e:
     print(e)    
@@ -338,25 +344,10 @@ try:
             #result = client.attachments.create_attachment_for_task(dg['gid'], {'parent' : dg['gid'],'url': d['picture'],'name':'website.jpg', 'resource_subtype':'external'}, opt_pretty=True)
             img = urlopen(d['picture'].replace('https', 'http')).read()
             client.attachments.create_attachment_for_task(dg['gid'],file_content=img, file_name = 'website.JPEG',file_content_type='image/jpeg') 
-        else:
-            print(dg['Animal ID'])
+        # else:
+            # print(dg['Animal ID'])
         #print (dg)
 except Exception as e: print(e)
-
-#Update From Foster
-try:
-    dogMap2 = getOpenTasks()
-    client.headers={"asana-enable": "new_user_task_lists"}
-    with open(fosterpath, encoding='utf-8-sig') as csvf:
-        csvReader = csv.DictReader(csvf)
-        for row in csvReader:      
-            if row['animal_id'] not in dogMap2:
-                continue
-            task_gid = dogMap2[row['animal_id']]['gid']
-            print(row['animal_id'])
-            t = client.tasks.update_task(task_gid, {'custom_fields':{'1200935881386208': 'Foster', '1200936046736379': sxdict[row['sex']]}}, opt_pretty=True)
-except Exception as e:
-    print(e) 
 
 #Update From Inventory
 try:
@@ -368,20 +359,75 @@ try:
         csvReader = csv.DictReader(csvf)
         for row in csvReader:     
             if row['AID'] not in dogMap2:
-                print(row['AID'] +" not found") 
+                # print(row['AID'] +" not found") 
                 continue
             task_gid = dogMap2[row['AID']]['gid']
-            print(row['AID'])
+            # print(row['AID'])
             try:
-                custom_fields = {'1200935881386208': row['Kennel'], '1200601343822614' : row['Age'],'1201130160371728': reasondict[row['reason']], '1201130160371724' : holddict[row['hold?']], '1200936046736379': sxdict[row['sx']] }
+                custom_fields = {'1200935881386208': row['Kennel'], '1201248320001333' : row['intake date'], '1200601343822614' : row['Age'],'1201130160371728': reasondict[row['reason']], '1201130160371724' : holddict[row['hold?']], '1200936046736379': sxdict[row['sx']] }
                 try:
-                    t = client.tasks.update_task(task_gid, {'custom_fields':custom_fields}, opt_pretty=True)
+                    t = client.tasks.update_task(task_gid, {'name': row['name'], 'custom_fields':custom_fields}, opt_pretty=True)
                 except Exception as e:
                     print(e)
             except Exception as e:
                 print(e)
 except Exception as e:
     print(e)        
+
+#Update From Foster
+try:
+    dogMap2 = getOpenTasks()
+    client.headers={"asana-enable": "new_user_task_lists"}
+    with open(fosterpath, encoding='utf-8-sig') as csvf:
+        csvReader = csv.DictReader(csvf)
+        resulte = client.tasks.search_tasks_for_workspace('1176075726005695', {'sections.any' : '1201845629243908', 'limit':100, 'completed':False, 'is_subtask':False, 'opt_fields' : ['completed', 'name']}, opt_pretty=True)
+        resultsp = client.tasks.search_tasks_for_workspace('1176075726005695', {'sections.any' : '1201845449859543', 'limit':100, 'completed':False, 'is_subtask':False, 'opt_fields' : ['completed', 'name']}, opt_pretty=True)
+        resultsa = client.tasks.search_tasks_for_workspace('1176075726005695', {'sections.any' : '1204643488018758', 'limit':100, 'completed':False, 'is_subtask':False, 'opt_fields' : ['completed', 'name']}, opt_pretty=True)
+        resultsr = client.tasks.search_tasks_for_workspace('1176075726005695', {'sections.any' : '1203151497470569', 'limit':100, 'completed':False, 'is_subtask':False, 'opt_fields' : ['completed', 'name']}, opt_pretty=True)
+        info = []
+        for dog in resulte:
+            info.append(dog['gid'])
+        for dog in resultsp:
+            info.append(dog['gid'])
+        for dog in resultsa:
+            info.append(dog['gid'])
+        for dog in resultsr:
+            info.append(dog['gid'])
+        print(info)
+        result = client.users.get_users_for_workspace('1176075726005695',{'opt_fields' : ['email']}, opt_pretty=True)
+        userlist = []
+        for r in result:
+            userlist.append(r)
+        for row in csvReader:      
+            # result = client.tasks.add_project_for_task(task_gid, {'project': '1201839537137838'}, opt_pretty=True)
+            if row['animal_id'] not in dogMap2:
+                continue
+            task_gid = dogMap2[row['animal_id']]['gid']
+            email = row['email_addr']
+            try:
+                result = list(filter(lambda person: person['email'] == email.lower(), userlist))
+                assignee = result[0]['gid']
+                t = client.tasks.update_task(task_gid, {'name': row['animal name'], "assignee": assignee, 'custom_fields':{'1200935881386208': 'Foster', '1201248320001333' : row['outcome_date'], '1200936046736379': sxdict[row['sex']]}}, opt_pretty=True)
+                print(task_gid)
+            except:
+                print(email)
+                t = client.tasks.update_task(task_gid, {'name': row['animal name'], 'custom_fields':{'1200935881386208': 'Foster', '1201248320001333' : row['outcome_date'], '1200936046736379': sxdict[row['sex']]}}, opt_pretty=True)
+            if row['outcome_subtype'] == 'ADOPTED':
+                result = client.tasks.update_task(task_gid,{'custom_fields':{'1201130160371728': "1201130160371730"}}, opt_pretty=True)
+                result = client.tasks.add_project_for_task(task_gid, {'project': '1201839537137838','section': '1202901598685368'}, opt_pretty=True)
+            elif row['outcome_subtype'] == 'FOUND':
+                result = client.tasks.add_project_for_task(task_gid, {'project': '1201839537137838','section': '1202982227736709'}, opt_pretty=True)
+            elif row['outcome_subtype'] == 'TEMP':
+                result = client.tasks.update_task(task_gid,{'custom_fields':{'1201130160371728': "1201197823351018"}}, opt_pretty=True)
+                result = client.tasks.add_project_for_task(task_gid, {'project': '1201839537137838','section': '1203151497470569'}, opt_pretty=True)
+            else:
+                if task_gid in info:
+                    continue
+                else:
+                    result = client.tasks.update_task(task_gid,{'custom_fields':{'1201130160371728': None}}, opt_pretty=True)
+                    result = client.tasks.add_project_for_task(task_gid, {'project': '1201839537137838','section': '1201845449830973'}, opt_pretty=True)
+except Exception as e:
+    print(e) 
 
 #Sort Tasks
 def getUnsortedRTG():
@@ -413,20 +459,36 @@ def getUnsortedRTG():
 
 client.headers={"asana-enable": "new_user_task_lists"}
 dgs = getUnsortedRTG()
+resulte = client.tasks.search_tasks_for_workspace('1176075726005695', {'sections.any' : '1204502801611055', 'limit':50, 'completed':False, 'is_subtask':False, 'opt_fields' : ['completed', 'name']}, opt_pretty=True)
+resultsp = client.tasks.search_tasks_for_workspace('1176075726005695', {'sections.any' : '1201839537137808', 'limit':50, 'completed':False, 'is_subtask':False, 'opt_fields' : ['completed', 'name']}, opt_pretty=True)
+info = []
+for dog in resulte:
+    info.append(dog['gid'])
+for dog in resultsp:
+    info.append(dog['gid'])
+print(info)
 for dog in dgs:    
     kennel = dog['Location']
     hold = dog['Reason']
     if kennel == 'Foster':
         result = client.tasks.add_project_for_task(dog['gid'], {'project': '1201839537137803','section': '1201845629243996'}, opt_pretty=True)
-        result = client.tasks.add_project_for_task(dog['gid'], {'project': '1201839537137838'}, opt_pretty=True)
+        # result = client.tasks.add_project_for_task(dog['gid'], {'project': '1201839537137838'}, opt_pretty=True)
+    elif hold == 'RESCUE' or hold == 'NEED RES':
+        result = client.tasks.add_project_for_task(dog['gid'], {'project': '1201839537137803','section': '1204502801611057'}, opt_pretty=True)
     elif hold == 'MICROCHIP':
         result = client.tasks.add_project_for_task(dog['gid'], {'project': '1201839537137803','section': '1202163059344411'}, opt_pretty=True)
-    elif hold == 'MEDICAL':
-        result = client.tasks.add_project_for_task(dog['gid'], {'project': '1201839537137803','section': '1202163059344412'}, opt_pretty=True)
-    elif hold == None:
-        if dog['Sex'] == 'N' or dog['Sex'] == 'S': 
-            result = client.tasks.add_project_for_task(dog['gid'], {'project': '1201839537137803','section': '1201839537137808'}, opt_pretty=True)
-
+    elif hold == 'FOSTER': 
+        result = client.tasks.add_project_for_task(dog['gid'], {'project': '1201839537137803','section': '1204502801611055'}, opt_pretty=True)
+    elif hold == 'QUARANTINE': 
+        result = client.tasks.add_project_for_task(dog['gid'], {'project': '1201839537137803','section': '1204502801611056'}, opt_pretty=True)
+    elif kennel != 'Foster':
+        if dog['gid'] in info:
+            continue
+        else:
+            result = client.tasks.add_project_for_task(dog['gid'], {'project': '1201839537137803','section': '1201839537137804'}, opt_pretty=True)
+    if kennel != 'Foster':
+        result = client.tasks.remove_project_for_task(dog['gid'], {'project': '1201839537137838'}, opt_pretty=True)
+        
 #Audit report
 def getOpenTaskList():
     client.headers={"asana-enable": "new_user_task_lists"}
@@ -447,13 +509,13 @@ def getOpenTaskList():
         dg['name'] = task['name']
         dg['permalink_url'] = task['permalink_url']
         membership = task['memberships']
-        print(membership)
+        # print(membership)
         for m in membership:
             dg[m['section']['project']['name']+' membership'] = m['section']['name']
         dg['gid'] = task['gid'] 
         for fld in task['custom_fields']:
             dg[fld['name']] = fld['display_value'] 
-            print(dg[fld['name']])
+            # print(dg[fld['name']])
         code = dg['Animal ID']
         if code == None:
             continue
@@ -475,7 +537,7 @@ def getFosters():
         for row in csvReader:      
             fosters.append(row)   
             #fosters[row['animal_id']] = row
-            print(row)
+            # print(row)
     return fosters
 
 def addAudit(dogMap, lst, keystr, typ):

@@ -165,9 +165,9 @@ def inCare():
     print('Sorting')
     Audit.moveInCareColumn()
     Audit.moveInFosterColumn()
-    Audit.moveMT()
     Audit.moveRTG()
     Audit.moveWalkBoard()
+    Audit.moveMT()
     return "inCare"
 
 def foster():
@@ -182,7 +182,7 @@ def HW():
 
 def subclean():
     print("Subtask Cleanup")
-    Audit.cleansubs()
+    # Audit.cleansubs()
     return "subclean"
 
 def doAudit():
@@ -197,14 +197,14 @@ def doAudit():
     return "create"
 
 def runNext(crnt):
+     
     mp = {"create" : pictures, 
     "pictures" : subclean,
     "subclean" :inventory, 
     "inventory" : website,
     "website" : foster,
     "foster" : RTG,
-    "RTG" : BT,
-    "BT": MT,
+    "RTG" : MT,
     "MT" : inCare,
     "inCare" : HW}
 
