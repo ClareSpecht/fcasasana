@@ -1,10 +1,11 @@
+from cgitb import small
 from cmath import nan
 from copyreg import remove_extension
 from itertools import count
 import re
 from sqlite3 import Row
 from tracemalloc import stop
-from unittest import skip
+from unittest import result, skip
 from urllib import request
 import os
 import sys
@@ -22,9 +23,9 @@ from urllib.request import urlopen
 # import gspread
 import requests
 import xml.etree.ElementTree as ET
-# from googleapiclient.discovery import build
-# from google_auth_oauthlib.flow import InstalledAppFlow
-# from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 from bs4 import BeautifulSoup as bs
 import pandas as pd
 import time
@@ -37,7 +38,7 @@ import base64
 import pickle
 from datetime import datetime
 from datetime import date
-# from google.oauth2.credentials import Credentials
+from google.oauth2.credentials import Credentials
 import json
 import sys
 from bs4 import BeautifulSoup
@@ -46,6 +47,7 @@ import config
 import fcas_config
 dictionary= fcas_config.dictionary()
 df_membership={}
+SCOPES = ['https://mail.google.com/']
 hw =  {'Positive': '1201160429318662',"High Positive":"1201160429318662", 'Negative': '1201160429318663', 'Low Positive':'1201160429318662'}
 
 client = asana.Client.access_token(config.token)
@@ -144,10 +146,10 @@ def pandatime():
    
     # df_fcas = df_fcas.drop(columns=drop_cols)
 
-    df_behavior = pd.read_csv("BehaviorTestHistory.csv",skiprows=3,encoding='utf-8')
-    df_behavior = df_behavior[['textbox22', 'textbox35', 'Notes','TestCategory','textbox29']]
-    df_behavior[['Date', 'Time']] = df_behavior['textbox29'].str.split(' ', n=1, expand=True)
-    df_behavior = df_behavior.sort_values(by=['Date'])
+    # df_behavior = pd.read_csv("BehaviorTestHistory.csv",skiprows=3,encoding='utf-8')
+    df_behavior = pd.read_csv("FCAS Behavior_FCAS Behavior.csv",skiprows=2,encoding='utf-8')
+    df_behavior = df_behavior[['BehaviorTest', 'Animal #', 'Notes','TestCategory','Date']]
+    df_behavior[['Date', 'Time']] = df_behavior['Date'].str.split(' ', n=1, expand=True)
     df_behavior.to_csv('Behavior1.csv')
     df_behavior['Notes'] = df_behavior['Date'] + ' ' + df_behavior['Notes']
     df_behavior = df_behavior.reset_index(drop=True)
@@ -155,7 +157,7 @@ def pandatime():
     #CLEANR = re.compile('<.*?>|&.+;')
     i = 0
     for row in df_behavior['Notes']:
-        string = row
+        string = str(row)
         new_string = string.replace("Notes: ", "" )
         #cleantext = re.sub(CLEANR, '', new_string)
         cleantext = BeautifulSoup(new_string, "html.parser").text
@@ -163,20 +165,26 @@ def pandatime():
         df_behavior['Notes'][i] = cleantext
         i = i + 1
     
-    dog_test = df_behavior.loc[df_behavior['textbox22'] == '  Interaction - Dog to Dog']
-    dog_test = dog_test.groupby(['textbox35'])['Notes'].apply('\n\n'.join).reset_index()
+    df_behavior.to_csv("Behavior2.csv")
+
+    dog_test = df_behavior.loc[df_behavior['BehaviorTest'] == 'Interaction - Dog to Dog']
+    dog_test = dog_test.groupby(['Animal #'])['Notes'].apply('\n\n'.join).reset_index()
     dog_test = dog_test.rename(columns={"Notes":"DogTest"})
     dog_test.to_csv("DogTest.csv")
 
+    playgroup = df_behavior.loc[df_behavior['BehaviorTest'] == 'Playgroup']
+    playgroup = playgroup.groupby(['Animal #'])['Notes'].apply('\n\n'.join).reset_index()
+    playgroup = playgroup.rename(columns={"Notes":"PlayGroup"})
+    playgroup.to_csv("PlayGroup.csv")
+
     behavior = df_behavior.loc[(df_behavior['TestCategory'] == 'In Shelter Volunteer Observation') | (df_behavior['TestCategory'] == 'Staff Observation') | (df_behavior['TestCategory'] == 'Trainer Notes')].reset_index(drop=True)
-    behavior.to_csv("Behavior2.csv")
-    behavior = behavior.loc[~(behavior['textbox22'] == '  Interaction - Dog to Dog')].reset_index(drop=True)
-    behavior = behavior.groupby(['textbox35'])['Notes'].apply('\n\n'.join).reset_index()
+    behavior = behavior.loc[~(behavior['BehaviorTest'] == 'Interaction - Dog to Dog')].reset_index(drop=True)
+    behavior = behavior.groupby(['Animal #'])['Notes'].apply('\n\n'.join).reset_index()
     behavior = behavior.rename(columns={"Notes":"Behavior"})
     behavior.to_csv("Behavior.csv")
 
     homenotes = df_behavior.loc[(df_behavior['TestCategory'] == 'DFTD/Field Trip') | (df_behavior['TestCategory'] == 'Home Notes') | (df_behavior['TestCategory'] == 'Other')].reset_index(drop=True)
-    homenotes = homenotes.groupby(['textbox35'])['Notes'].apply('\n\n'.join).reset_index()
+    homenotes = homenotes.groupby(['Animal #'])['Notes'].apply('\n\n'.join).reset_index()
     homenotes = homenotes.rename(columns={"Notes":"HomeNotes"})
     homenotes.to_csv("HomeNotes.csv")
 
@@ -208,9 +216,10 @@ def pandatime():
     #df_fcas_hold = df_fcas_hold.rename(columns={"textbox15":"HoldReason"})
     #df_fcas_hold["HoldReason"] = df_fcas_hold["HoldReason"].str[1:]
     df_fcas =pd.merge(df_fcas,df_fcas_hold, how='left',right_on='Animal #',left_on='AnimalNumber')
-    df_fcas =pd.merge(df_fcas,dog_test, how='left',right_on='textbox35',left_on='AnimalNumber')
-    df_fcas =pd.merge(df_fcas,behavior, how='left',right_on='textbox35',left_on='AnimalNumber')
-    df_fcas =pd.merge(df_fcas,homenotes, how='left',right_on='textbox35',left_on='AnimalNumber')
+    df_fcas =pd.merge(df_fcas,dog_test, how='left',right_on='Animal #',left_on='AnimalNumber')
+    df_fcas =pd.merge(df_fcas,playgroup, how='left',right_on='Animal #',left_on='AnimalNumber')
+    df_fcas =pd.merge(df_fcas,behavior, how='left',right_on='Animal #',left_on='AnimalNumber')
+    df_fcas =pd.merge(df_fcas,homenotes, how='left',right_on='Animal #',left_on='AnimalNumber')
     df_fcas['Location'] = df_fcas['Location'] + ' ' + df_fcas['SubLocation']
     # df_fcas['Color'] = df_fcas[['Color', 'ColorPattern', 'PrimaryBreed', 'SecondaryBreed']].agg(' '.join, axis=1)
     #df_fcas[['AnimalWeight', 'Pounds']] = df_fcas['AnimalWeight'].str.split('.', n=1, expand=True)
@@ -218,7 +227,7 @@ def pandatime():
     df_fcas[['DateOfBirth', 'Time2']] = df_fcas['DateOfBirth'].str.split(' ', n=1, expand=True)
     df_fcas[['ExpirationDate', 'Time3']] = df_fcas['ExpirationDate'].str.split(' ', n=1, expand=True)
     df_fcas.to_csv("DF_FCAS_nonreduced.csv")
-    df_fcas = df_fcas.drop(columns=['SubLocation','Time','Time2','Time3','Animal #_x','Animal #_y', 'Animal #_x','Animal #','Animal #_y','textbox35_x','textbox35_y','textbox35'])
+    df_fcas = df_fcas.drop(columns=['SubLocation','Time','Time2','Time3','Animal #_x','Animal #_y', 'Animal #_x','Animal #_y', 'Animal #_x','Animal #_y', 'Animal #_x','Animal #_y'])
     print(df_fcas['AnimalWeight'].dtypes)
     df_fcas['AnimalWeight'] = np.floor(pd.to_numeric(df_fcas['AnimalWeight'], errors='coerce')).astype('Int64')
     #df_fcas['AnimalWeight'] = df_fcas['AnimalWeight'].astype('Int64')
@@ -346,7 +355,7 @@ def foster_df ():
     print(len(column_titles))
     counter=0
     for x in row_df:
-        if(len(x)>35):           
+        if(len(x)>dictionary['variables']['lenwname']):           
             print(counter)
             print(row_df[counter])
             row_df.pop(counter)
@@ -395,7 +404,7 @@ def pathways_df ():
     print(len(column_titles))
     counter=0
     for x in row_df:
-        if(len(x)>35):           
+        if(len(x)>dictionary['variables']['lenwname']):           
             print(counter)
             print(row_df[counter])
             row_df.pop(counter)
@@ -444,7 +453,7 @@ def rtg_df ():
     print(len(column_titles))
     counter=0
     for x in row_df:
-        if(len(x)>35):           
+        if(len(x)>dictionary['variables']['lenwname']):           
             print(counter)
             print(row_df[counter])
             row_df.pop(counter)
@@ -492,7 +501,7 @@ def rtf_df ():
     print(len(column_titles))
     counter=0
     for x in row_df:
-        if(len(x)>35):           
+        if(len(x)>dictionary['variables']['lenwname']):           
             print(counter)
             print(row_df[counter])
             row_df.pop(counter)
@@ -546,7 +555,7 @@ def walk_df ():
 
     counter=0
     for x in row_df:
-        if(len(x)>35):           
+        if(len(x)>dictionary['variables']['len_walk']):           
             print(counter)
             print(row_df[counter])
             row_df.pop(counter)
@@ -615,7 +624,7 @@ def content_df ():
 
     counter=0
     for x in row_df:
-        if(len(x)>35):           
+        if(len(x)>dictionary['variables']['len_walk']):           
             print(counter)
             print(row_df[counter])
             row_df.pop(counter)
@@ -728,7 +737,7 @@ def update(gid,options):
         section ={'project':dictionary['projects']['main']['gid'],'section':dictionary['projects']['main']['sections']['5']}
     elif (options['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Dogs 6')):
         section ={'project':dictionary['projects']['main']['gid'],'section':dictionary['projects']['main']['sections']['6']}
-    elif (options['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Caseworker')):
+    elif (options['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Caseworker')) or (options['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Dogs 2')):
         section ={'project':dictionary['projects']['main']['gid'],'section':dictionary['projects']['main']['sections']['CW']}
     elif (options['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Dog ISO')) or (options['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Dog Q')):
         section ={'project':dictionary['projects']['main']['gid'],'section':dictionary['projects']['main']['sections']['ISO']}
@@ -809,7 +818,7 @@ def updatewalk(gid,options):
         section ={'project':dictionary['projects']['walk']['gid'],'section':dictionary['projects']['walk']['sections']['Foster']}
     elif (options['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Dogs 3')):
         section ={'project':dictionary['projects']['walk']['gid'],'section':dictionary['projects']['walk']['sections']['3']}
-    elif (options['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Caseworker')):
+    elif (options['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Caseworker')) or (options['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Dogs 2')):
         section ={'project':dictionary['projects']['walk']['gid'],'section':dictionary['projects']['walk']['sections']['CW']}
     elif (options['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Dog ISO')):
         section ={'project':dictionary['projects']['walk']['gid'],'section':dictionary['projects']['walk']['sections']['ISO']}
@@ -1140,7 +1149,7 @@ def create_new_pets(data):
     elif (data['data']['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Dogs 6')):
         #print(data['data']['custom_fields'][dictionary['fields']['Location']['gid']])
         section ={'project':dictionary['projects']['main']['gid'],'section':dictionary['projects']['main']['sections']['6']}
-    elif (data['data']['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Caseworker')):
+    elif (data['data']['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Caseworker')) or (data['data']['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Dogs 2')):
         #print(data['data']['custom_fields'][dictionary['fields']['Location']['gid']])
         section ={'project':dictionary['projects']['main']['gid'],'section':dictionary['projects']['main']['sections']['CW']}
     elif (data['data']['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Dog ISO')) or (data['data']['custom_fields'][dictionary['fields']['Location']['gid']].startswith('Dog Q')):
@@ -1274,6 +1283,24 @@ def pictures(df_old,df_raw):
         # print(soup.find(''))
     return counter
 
+def assigntags(dogs):
+    small = dogs.loc[(dogs['AnimalWeight'] > 0) & (dogs['AnimalWeight'] < 25)]
+    small.to_csv('small.csv')
+    for row in small.index:
+        print(small['gid'][row])
+        result = client.tasks.add_tag_for_task(small['gid'][row], {'tag': '1203827915981310'}, opt_pretty=True)
+    medium = dogs.loc[(dogs['AnimalWeight'] >= 25) & (dogs['AnimalWeight'] < 45)]
+    medium.to_csv('medium.csv')
+    for row in medium.index:
+        print(medium['gid'][row])
+        result = client.tasks.add_tag_for_task(medium['gid'][row], {'tag': '1203717691073440'}, opt_pretty=True)
+    large = dogs.loc[(dogs['AnimalWeight'] >= 45)]
+    large.to_csv('large.csv')
+    for row in large.index:
+        print(large['gid'][row])
+        result = client.tasks.add_tag_for_task(large['gid'][row], {'tag': '1203827915981305'}, opt_pretty=True)
+    return
+
 def picture_uploader(data):
     gid = data['gid']
     name= data['AnimalName']+'.jpg'
@@ -1290,7 +1317,22 @@ def client_test():
     setClientWithToken(client)
     (url, state) = client.session.authorization_url()
     print("authorized=", client.session.authorized)
-    tasks = client.tasks.get_tasks_for_project(dictionary['projects']['main']['gid'],{'is_subtask':False,'opt_fields' : ['custom_fields.name', 'custom_fields.display_value','completed', 'name', 'permalink_url', 'created_at','memberships.section.name', 'memberships.section.project.name' ]})
+    found = True
+    last_date = datetime.now().isoformat()
+    offset = None
+    tasks = []
+    tasks = client.tasks.get_tasks_for_project(dictionary['projects']['main']['gid'],{'is_subtask':False,'opt_fields' : ['custom_fields.name', 
+    'custom_fields.display_value','completed', 'name', 'permalink_url', 'created_at','memberships.section.name', 
+    'memberships.section.project.name' ]})
+    # while found:
+    #     result = client.tasks.get_tasks_for_project(dictionary['projects']['main']['gid'],{'sort_by':"created_at", 'limit':100, 'offset': offset, 'is_subtask':False,'opt_fields' : ['custom_fields.name', 'custom_fields.display_value','completed', 'name', 'permalink_url', 'created_at','memberships.section.name', 'memberships.section.project.name' ]})
+    #     # 'created_at.before' : last_date,
+    #     found = False
+    #     for r in result:
+    #         found = True
+    #         last_date = r["created_at"]
+    #         tasks.append(r)
+    #         print(r)
     projectmap={}
     pp = pprint.PrettyPrinter(indent=2)
     column_titles = ['gid']
@@ -1323,14 +1365,14 @@ def client_test():
     print(len(column_titles))
     counter=0
     for x in row_df:
-        if(len(x)>35):           
+        if(len(x)>dictionary['variables']['len_cols']):           
             print(counter)
             print(row_df[counter])
             row_df.pop(counter)
         counter+=1
     df_asana_database = pd.DataFrame(row_df,columns=column_titles)
     df_asana_database.to_csv("Asana_dataframe.csv")
-    return [df_asana_database,gid_dict,df_membership]
+    return [df_asana_database,gid_dict,df_membership] 
 
 def attachments():
     setClientWithToken(client)
@@ -1368,7 +1410,7 @@ def attachments():
     print(len(column_titles))
     counter=0
     for x in row_df:
-        if(len(x)>35):           
+        if(len(x)>dictionary['variables']['len_cols']):           
             print(counter)
             print(row_df[counter])
             row_df.pop(counter)
@@ -1377,63 +1419,161 @@ def attachments():
     df_asana_database.to_csv("Attachment_dataframe.csv")
     return [df_asana_database,gid_dict]
 
-# def credentials():
-#     creds = None
-#     # The file token.json stores the user's access and refresh tokens, and is
-#     # created automatically when the authorization flow completes for the first
-#     # time.
-#     if os.path.exists('token.json'):
-#         creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-#     # If there are no (valid) credentials available, let the user log in.
-#     if not creds or not creds.valid:
-#         if creds and creds.expired and creds.refresh_token:
-#             creds.refresh(Request())
-#         else:
-#             flow = InstalledAppFlow.from_client_secrets_file(
-#                 'credentials.json', SCOPES)
-#             creds = flow.run_local_server(port=0)
-#         # Save the credentials for the next run
-#         with open('token.json', 'w') as token:
-#             token.write(creds.to_json())
-#     return creds
+def credentials():
+    creds = None
+    # The file token.json stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'credentials.json', SCOPES)
+            creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open('token.json', 'w') as token:
+            token.write(creds.to_json())
+    return creds
+
+def email_getter(name,service):
+    
+    query = name["query"]
+    for y in query:
+        results = service.users().messages().list(userId='me', q=y[0]).execute()
+        print(query)
+        print(y[0])
+        print(y[1])
+        
+        labels = results.get('messages', [])
+        print(labels)
+        if not labels:
+            print('No labels found.')
+        else:
+            print('Labels:')
+            for label in labels:
+                print(labels[0]['id'])
+        label = labels[0]['id']
+        df=[]
+        for x in labels:
+            label = x['id']
+            user = 'me'
+            switch(service,user,label,name,y[1])
+        
+
+    return df
+
+def switch(service,user,label,name,filename):
+    attachmenttype = name["attachmenttype"]
+    if attachmenttype == "inbody":
+        df = getcsv(name,service,user,label)
+    if attachmenttype =="attachment":
+        df =GetAttachments(name,service,user,label,filename)
+    return df
+
+def GetAttachments(name,service, user_id, msg_id,filename):
+    """Get and store attachment from Message with given id.
+
+    :param service: Authorized Gmail API service instance.
+    :param user_id: User's email address. The special value "me" can be used to indicate the authenticated user.
+    :param msg_id: ID of Message containing attachment.
+    """
+
+    message = service.users().messages().get(userId=user_id, id=msg_id).execute()
+    pp = pprint.PrettyPrinter(indent=3)
+    
+    with open("tempshit"+str(msg_id)+".txt","w") as f:
+        f.write(pp.pformat(message))
+    counter =0
+    
+    print(message['payload']['headers'][17]['value'])
+    # filename = name['switch'][message['payload']['headers'][17]['value']]
+    
+
+    for part in message['payload']['parts']:
+        print(counter)
+        if part['filename']:
+            if part['partId']==0:
+                continue
+            else:
+                att_id = part['body']['attachmentId']
+                att = service.users().messages().attachments().get(userId=user_id, messageId=msg_id,id=att_id).execute()
+            data = att['data']
+            file_data = base64.urlsafe_b64decode(data.encode('UTF-8'))
+            path = part['filename']
+            with open(filename,"wb") as f:
+                    f.write(file_data)
+            # if name["filetype"] == "excel":
+            #     df = pd.read_excel(name['filename'][counter],skiprows=name["skiprows"])
+            # if name["filetype"] == "csv":
+            #     df = pd.read_csv(filename,skiprows=name["skiprows"])
+            #     print(df.head())
+            
+            # df_list.append(df)  
+    return
+
+def getcsv(name,service,user,label):
+    body = service.users().messages().get(userId='me',id=label,format= 'full').execute()
+    try:
+        try:
+            decode=base64.urlsafe_b64decode(body["payload"]["parts"][0]["body"]["data"])
+        except:
+            decode=base64.urlsafe_b64decode(body["payload"]["body"]["data"])        
+    except: 
+        body = service.users().messages().attachments().get(userId='me',id=body["payload"]["parts"][1]["attachmentId"],messageId=label).execute()
+        decode = base64.urlsafe_b64decode(body['data'])
+    soup = bs(decode, "html.parser")
+    pre = soup.find_all('p')
+    data = []
+    for x in range(len(pre)):
+        data.append(pre[x].text.split(","))
+    headers = data.pop(0)
+    df = pd.DataFrame(data,columns = headers)
+    
+
+    return df
 
 def main():
     startTime = time.time()
     
     try:
-    #     # service = build('gmail', 'v1', credentials=credentials())
-    #     # email_getter(dictionary['emails'],service)
+        # service = build('gmail', 'v1', credentials=credentials())
+        # email_getter(dictionary['emails'],service)
         check_enum()
         lists = client_test()
         pand = pandatime()
         dfs = comb_dfs(lists[0],pand[0],lists[1])
-        result = create_new_enum(pand[0])
-        new_add = create_new(dfs[1])
-        out=remove_old(dfs[4],dfs[5])
-        intake_ol = bring_back_old(dfs[3]) 
-        update = update_existing(dfs[0])
-        walk = walk_df()
+        # tags = assigntags(dfs[0])
+        # result = create_new_enum(pand[0])
+        # # new_add = create_new(dfs[1])
+        # out=remove_old(dfs[4],dfs[5])
+        # intake_ol = bring_back_old(dfs[3]) 
+        # update = update_existing(dfs[0])
+        # walk = walk_df()
 
-        lists=client_test()
-        walkboardclean = walkclean(walk[0],lists[0])
-        #oldpathways = pathways_df()
-        #newpathways = pathways(dfs[6],oldpathways[0])
-        oldrtg = rtg_df()
-        readytogo = rtg(dfs[7],oldrtg[0])
-        oldrtf = rtf_df()
-        readytofoster = rtf(dfs[8],oldrtf[0])
-        fosdf = foster_df()
-        fos = foster(fosdf[0])
-        attach = attachments()
-        dfsa = comb_pics(attach[0],pand[0],attach[1])
-        picts = pictures(dfsa[0],pand[0])
-        content = content_df()
-        contentboardclean = contentclean(content[0],lists[0])
-        contentupdate = update_content(contentboardclean)
-        walk = walk_df()
-        walkduplicates = walkdelete(walk[0])
-        walkboardclean = walkclean(walk[0],lists[0])
-        walkupdates = update_walks(walkboardclean)
+        # lists=client_test()
+        # walkboardclean = walkclean(walk[0],lists[0])
+        # #oldpathways = pathways_df()
+        # #newpathways = pathways(dfs[6],oldpathways[0])
+        # oldrtg = rtg_df()
+        # readytogo = rtg(dfs[7],oldrtg[0])
+        # oldrtf = rtf_df()
+        # readytofoster = rtf(dfs[8],oldrtf[0])
+        # fosdf = foster_df()
+        # fos = foster(fosdf[0])
+        # attach = attachments()
+        # dfsa = comb_pics(attach[0],pand[0],attach[1])
+        # picts = pictures(dfsa[0],pand[0])
+        # content = content_df()
+        # contentboardclean = contentclean(content[0],lists[0])
+        # contentupdate = update_content(contentboardclean)
+        # walk = walk_df()
+        # walkduplicates = walkdelete(walk[0])
+        # walkboardclean = walkclean(walk[0],lists[0])
+        # walkupdates = update_walks(walkboardclean)
         
         executionTime = (time.time() - startTime)
         print("Completed")

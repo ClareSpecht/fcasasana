@@ -808,7 +808,7 @@ def updateFosterLocations():
         client.headers={"asana-enable": "new_user_task_lists"}
         with open(fosterpath, encoding='utf-8-sig') as csvf:
             csvReader = csv.DictReader(csvf)
-            for row in csvReader:    
+            for row in csvReader:  
                 if row['animal_id'] not in dogMap2:
                     continue
                 task_gid = dogMap2[row['animal_id']]['gid']
@@ -824,6 +824,7 @@ def updateFosterLocations():
                     if r['completed'] == True:
                         continue
                     st = client.tasks.update_task(r['gid'], {'custom_fields':{'1200601343822598' : row['animal_id'],'1200935881386208': 'Foster'}}, opt_pretty=True)
+                    # print(t['custom_fields'][6]['display_value'])
                     if t['custom_fields'][6]['display_value'] != None:
                         st = client.tasks.update_task(r['gid'], {'custom_fields':{'1201130160371728': reasondict[t['custom_fields'][6]['display_value']]}}, opt_pretty=True)
                 result = client.tasks.add_project_for_task(task_gid, {'project': '1201449344168303'}, opt_pretty=True)

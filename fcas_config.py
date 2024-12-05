@@ -103,15 +103,17 @@ def dictionary():
             'lenwname':34,
             'len_walk':35
         },
-        # 'emails':{ 
-        #     "query":[["from:PetPoint Reporting Scheduler  subject: 'Daily Inventory asana' newer_than:1d ",'Current Inv.csv'],['from:PetPoint Reporting Scheduler  subject: "DCAS HW Asana" newer_than:1d ','HW result.csv']],
-        #     # "query":[["from:PetPoint Reporting Scheduler  subject: 'Daily Inventory asana' newer_than:4h ",'Current Inv.csv'],['from:PetPoint Reporting Scheduler  subject: "DCAS HW Asana" newer_than:4h ','HW result.csv']],
-        #     "attachmenttype":"attachment",
-        #     "filename":["Current inv.csv","HW Results.csv","foster.csv","outcome.csv"],
-        #     "filetype":"csv",
-        #     "skiprows":2,
-        #     'switch':{'Daily Inventory asana':'Current Inv.csv','DCAS Daily hw':'HW result.csv'}
-        # },
+        'emails':{ 
+            "query":[["from:PetPoint Reporting Scheduler  subject: 'FCAS Inventory' newer_than:1d ",'FCAS Inventory_FCAS Inventory.csv'],["from:PetPoint Reporting Scheduler  subject: 'FCAS Behavior' newer_than:1d ",'FCAS Behavior_FCAS Behavior.csv'],
+            ["from:PetPoint Reporting Scheduler  subject: 'FCAS Foster' newer_than:1d ",'FCAS Foster_FCAS Foster.csv'],["from:PetPoint Reporting Scheduler  subject: 'FCAS Rabies' newer_than:1d ",'FCAS Rabies_FCAS Rabies.csv'],
+            ["from:PetPoint Reporting Scheduler  subject: 'FCAS HW' newer_than:1d ",'FCAS HW_FCAS HW.csv'],["from:PetPoint Reporting Scheduler  subject: 'FCAS Holds' newer_than:1d ",'FCAS Holds_FCAS Holds.csv'],
+            ["from:PetPoint Reporting Scheduler  subject: 'FCAS Short URL' newer_than:1d ",'FCAS Short URL_FCAS Short URL.csv'],["from:PetPoint Reporting Scheduler  subject: 'FCAS Outcome asana' newer_than:1d ",'FCAS Outcome asana_FCAS Outcome asana.csv']],
+            "attachmenttype":"attachment",
+            "filename":["FCAS Inventory_FCAS Inventory.csv",'FCAS Behavior_FCAS Behavior.csv','FCAS Foster_FCAS Foster.csv','FCAS Rabies_FCAS Rabies.csv','FCAS HW_FCAS HW.csv','FCAS Holds_FCAS Holds.csv','FCAS Short URL_FCAS Short URL.csv','FCAS Outcome asana_FCAS Outcome asana.csv'],
+            "filetype":"csv",
+            #"skiprows":2,
+            'switch':{'FCAS Inventory':'FCAS Inventory_FCAS Inventory.csv','FCAS Behavior':'FCAS Behavior_FCAS Behavior.csv','FCAS Foster':'FCAS Foster_FCAS Foster.csv','FCAS Rabies':'FCAS Rabies_FCAS Rabies.csv','FCAS HW':'FCAS HW_FCAS HW.csv','FCAS Holds':'FCAS Holds_FCAS Holds.csv','FCAS Short URL':'FCAS Short URL_FCAS Short URL.csv','FCAS Outcome asana':'FCAS Outcome asana_FCAS Outcome asana.csv'}
+        },
 
         'create_new':{
             "new_remove":['AnimalName',"projects"],
@@ -119,7 +121,7 @@ def dictionary():
                         'AnimalNumber': "Animal ID",
                         'Stage':"Current Status", 'DateOfBirth':"DOB", 'ARN':'Level Reason', 'ColorAndBreed':'Color & Breed', 'ExpirationDate':'Rabies Revaccination Date',
                         'AnimalWeight':"Weight", 'Result':"HW", 'FosterReason':'Foster Start Reason', 'HoldReason': 'Hold', 'MicrochipNumber':'Microchip ID',
-                        "DogTest":"\"Dog Test\" Notes", "Behavior":"Behavior Notes", 'HomeNotes':"Foster/Home Notes", 'ShortURL':'Short URL'
+                        "DogTest":"\"Dog Test\" Notes", "Behavior":"Behavior Notes", "PlayGroup":"Playgroup Notes", 'HomeNotes':"Foster/Home Notes", 'ShortURL':'Short URL'
                         },
             "df_fields_keep":[
                 'AnimalNumber', 'AnimalName',  'Age', 'ARN', 'ColorAndBreed',
@@ -129,15 +131,15 @@ def dictionary():
             ]
             },
         "update_existing":{
-            'update_fields':['AnimalWeight','Age_x', 'ColorAndBreed','ShortURL','MicrochipNumber','ExpirationDate','ARN', 'Location_x', 'Stage', 'Level_x', 'Sex_x', 'Result','FosterReason','HoldReason','DogTest','Behavior','HomeNotes'],
-            'df_fields_keep':['gid','AnimalWeight','Age_x','ColorAndBreed','ShortURL','MicrochipNumber','ExpirationDate','ARN','Location_x','AnimalName', 'Stage', 'FosterReason', 'HoldReason', 'Level_x', 'Sex_x', 'Result','DogTest','Behavior','HomeNotes'],
+            'update_fields':['AnimalWeight','Age_x', 'ColorAndBreed','ShortURL','MicrochipNumber','ExpirationDate','ARN', 'Location_x', 'Stage', 'Level_x', 'Sex_x', 'Result','FosterReason','HoldReason','DogTest','PlayGroup','Behavior','HomeNotes'],
+            'df_fields_keep':['gid','AnimalWeight','Age_x','ColorAndBreed','ShortURL','MicrochipNumber','ExpirationDate','ARN','Location_x','AnimalName', 'Stage', 'FosterReason', 'HoldReason', 'Level_x', 'Sex_x', 'Result','DogTest','PlayGroup','Behavior','HomeNotes'],
             "df_switch":{ 
                     'AnimalNumber': "Animal ID", 'ColorAndBreed':'Color & Breed',
                     'DateOfBirth':"DOB", 'MicrochipNumber':'Microchip ID', 'ExpirationDate':'Rabies Revaccination Date',
                     'AnimalWeight':"Weight", "Age_x":"Age", 'ARN':'Level Reason',
                     "Location_x":"Location", "Level_x":"Level", 'ShortURL':'Short URL',
                     'Stage' : 'Current Status', 'Sex_x' : 'Sex', 'Result':"HW", 'FosterReason':'Foster Start Reason', 'HoldReason':'Hold',
-                    "DogTest":"\"Dog Test\" Notes", "Behavior":"Behavior Notes", 'HomeNotes':"Foster/Home Notes"
+                    "DogTest":"\"Dog Test\" Notes", "Behavior":"Behavior Notes","PlayGroup":"Playgroup Notes", 'HomeNotes':"Foster/Home Notes"
                     },
             'name_switch':{
 

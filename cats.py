@@ -17,15 +17,16 @@ from urllib.request import urlopen
 import Audit
 import asana
 from datetime import date
+from dateutil.relativedelta import relativedelta
 import pandas as pd
 import config
 client = asana.Client.access_token(config.token)
 
-fosterpath = 'foster inventory 6.15.23.csv'
+fosterpath = 'foster report (79).csv'
 #HWPath = 'hw+ (61).csv'
-InventoryPath = 'inventory 6.15.23.csv'
+InventoryPath = 'asana (111).csv'
 #OutcomePath = 'outcomes 9.9-9.10.csv'
-today = str(date.today())
+today = str(date.today() + relativedelta(weeks=2))
 tempupdate = client.tasks.update_task('1204779649606424', {'due_on':today}, opt_pretty=True)
 
 sxdict = {

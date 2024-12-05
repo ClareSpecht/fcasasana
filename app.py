@@ -182,7 +182,7 @@ def HW():
 
 def subclean():
     print("Subtask Cleanup")
-    # Audit.cleansubs()
+    Audit.cleansubs()
     return "subclean"
 
 def doAudit():
@@ -192,21 +192,23 @@ def doAudit():
     print("create missing dogs")
     today = str(date.today())
     tempupdate = client.tasks.update_task('1203776022137703', {'due_on':today}, opt_pretty=True)
-    Audit.createMissingDogs()
-    Audit.createMissingFosters()
+    # Audit.createMissingDogs()
+    # Audit.createMissingFosters()
     return "create"
 
 def runNext(crnt):
      
-    mp = {"create" : pictures, 
-    "pictures" : subclean,
-    "subclean" :inventory, 
-    "inventory" : website,
-    "website" : foster,
-    "foster" : RTG,
-    "RTG" : MT,
-    "MT" : inCare,
-    "inCare" : HW}
+    mp = {"create" : subclean}
+
+    # mp = {"create" : pictures, 
+    # "pictures" :inventory, 
+    # "inventory" : website,
+    # "website" : foster,
+    # "foster" : RTG,
+    # "RTG" : MT,
+    # "MT" : inCare,
+    # "inCare" : HW,
+    # "HW" : subclean}
 
     if crnt in mp:
         fnct = mp[crnt]
