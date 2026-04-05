@@ -130,31 +130,18 @@ def setClientWithToken(clientjson):
     return
 
 def pandatime():
+    # Pull in main inventory file
     df_fcas = pd.read_csv("FCAS Inventory_FCAS Inventory.csv")
 
-    # drop_cols = ['Location_1', 'AVG_LOS', 'Distinct_Animals', 
-    # 'Declawed',
-    #    'PreAltered', 'IntakeType',
-    #    'ChipNumber', 'Species', 
-    #    'EmancipationDate',
-    #    'StageChangeReason',
-    #    'Danger', 'DangerType', 'NumberOfPictures', 'Videos', 'HoldReason',
-    #    'HorForName', 'HoldStartDate', 'HoldPlacedBy', 'Total_Animals']
-    # dict_name = {
-    #     'AnimalNumber':"AID",
-    # }
-   
-    # df_fcas = df_fcas.drop(columns=drop_cols)
-
-    # df_behavior = pd.read_csv("BehaviorTestHistory.csv",skiprows=3,encoding='utf-8')
+    # Pull in behavior module and include date w/ notes
     df_behavior = pd.read_csv("FCAS Behavior_FCAS Behavior.csv",skiprows=2,encoding='utf-8')
     df_behavior = df_behavior[['BehaviorTest', 'Animal #', 'Notes','TestCategory','Date']]
     df_behavior[['Date', 'Time']] = df_behavior['Date'].str.split(' ', n=1, expand=True)
-    df_behavior.to_csv('Behavior1.csv')
+    #df_behavior.to_csv('Behavior1.csv')
     df_behavior['Notes'] = df_behavior['Date'] + ' ' + df_behavior['Notes']
     df_behavior = df_behavior.reset_index(drop=True)
-    #df_behavior = df_behavior.loc[(df_behavior['TestCategory'] == 'In Shelter Volunteer Observation') | (df_behavior['TestCategory'] == 'Staff Observation')].reset_index(drop=True)
-    #CLEANR = re.compile('<.*?>|&.+;')
+    
+    # Remove html garbage from PetPoint's csv output
     i = 0
     for row in df_behavior['Notes']:
         string = str(row)
@@ -165,72 +152,74 @@ def pandatime():
         df_behavior['Notes'][i] = cleantext
         i = i + 1
     
-    df_behavior.to_csv("Behavior2.csv")
+    #df_behavior.to_csv("Behavior2.csv")
 
-    dog_test = df_behavior.loc[df_behavior['BehaviorTest'] == 'Interaction - Dog to Dog']
+    #Separate behavior module by Asana category (Dog Test, Playgroup, Foster Notes, and all other Behavior)
+    dog_test = df_behavior.loc[(df_behavior['BehaviorTest'] == 'Interaction - Dog to Dog')|(df_behavior['BehaviorTest'] == 'Play Style Assessment')]
     dog_test = dog_test.groupby(['Animal #'])['Notes'].apply('\n\n'.join).reset_index()
     dog_test = dog_test.rename(columns={"Notes":"DogTest"})
+    dog_test = dog_test.rename(columns={"Animal #": "AnimalNumberDT"})
     dog_test.to_csv("DogTest.csv")
 
-    playgroup = df_behavior.loc[df_behavior['BehaviorTest'] == 'Playgroup']
+    playgroup = df_behavior.loc[(df_behavior['TestCategory'] == 'Playgroup')].reset_index(drop=True)
+    playgroup = playgroup.loc[~(playgroup['BehaviorTest'] == 'Play Style Assessment')]
     playgroup = playgroup.groupby(['Animal #'])['Notes'].apply('\n\n'.join).reset_index()
     playgroup = playgroup.rename(columns={"Notes":"PlayGroup"})
+    playgroup = playgroup.rename(columns={"Animal #": "AnimalNumberPG"})
     playgroup.to_csv("PlayGroup.csv")
 
-    behavior = df_behavior.loc[(df_behavior['TestCategory'] == 'In Shelter Volunteer Observation') | (df_behavior['TestCategory'] == 'Staff Observation') | (df_behavior['TestCategory'] == 'Trainer Notes')].reset_index(drop=True)
-    behavior = behavior.loc[~(behavior['BehaviorTest'] == 'Interaction - Dog to Dog')].reset_index(drop=True)
+    behavior = df_behavior.loc[~((df_behavior['TestCategory'] == 'DFTD/Field Trip') | (df_behavior['TestCategory'] == 'Home Notes') | (df_behavior['TestCategory'] == 'Other') | (df_behavior['TestCategory'] == 'Playgroup'))].reset_index(drop=True)
+    behavior = behavior.loc[~((behavior['BehaviorTest'] == 'Interaction - Dog to Dog'))].reset_index(drop=True)
+    behavior.to_csv("Behavior.csv")
     behavior = behavior.groupby(['Animal #'])['Notes'].apply('\n\n'.join).reset_index()
     behavior = behavior.rename(columns={"Notes":"Behavior"})
-    behavior.to_csv("Behavior.csv")
+    behavior = behavior.rename(columns={"Animal #": "AnimalNumberBehavior"})
+    #behavior.to_csv("Behavior.csv")
 
     homenotes = df_behavior.loc[(df_behavior['TestCategory'] == 'DFTD/Field Trip') | (df_behavior['TestCategory'] == 'Home Notes') | (df_behavior['TestCategory'] == 'Other')].reset_index(drop=True)
     homenotes = homenotes.groupby(['Animal #'])['Notes'].apply('\n\n'.join).reset_index()
     homenotes = homenotes.rename(columns={"Notes":"HomeNotes"})
-    homenotes.to_csv("HomeNotes.csv")
+    homenotes = homenotes.rename(columns={"Animal #": "AnimalNumberHome"})
+    #homenotes.to_csv("HomeNotes.csv")
 
-    #df_fcas_hw = pd.read_csv("MedicalTestsDetail.csv",skiprows=6)
+    # Pull in remaining csvs for master file
     df_fcas_hw = pd.read_csv("FCAS HW_FCAS HW.csv",skiprows=2)
-
-    #df_fcas_hw = pd.read_csv("MedicalTestsDetail.csv",skiprows=6)
+    df_fcas_hw = df_fcas_hw.rename(columns={"Animal #":"AnimalNumberHW"})
     df_fcas_rabies = pd.read_csv("FCAS Rabies_FCAS Rabies.csv",skiprows=2)
-
-    #df_fcas_foster = pd.read_csv("FosterCurrent.csv",skiprows=6)
+    df_fcas_rabies = df_fcas_rabies.rename(columns={"Animal #":"AnimalNumberRabies"})
     df_fcas_foster = pd.read_csv("FCAS Foster_FCAS Foster.csv",skiprows=2)
-
-    #df_fcas_hold = pd.read_csv("HoldingCurrent.csv",skiprows=3)
+    df_fcas_foster = df_fcas_foster.rename(columns={"Animal #":"AnimalNumberFoster"})
     df_fcas_hold = pd.read_csv("FCAS Holds_FCAS Holds.csv",skiprows=2)
-
+    df_fcas_hold = df_fcas_hold.rename(columns={"Animal #":"AnimalNumberHold"})
     df_fcas_url = pd.read_csv("FCAS Short URL_FCAS Short URL.csv",skiprows=2)
+    df_fcas_url = df_fcas_url.rename(columns={"Animal #":"AnimalNumberURL"})
+    df_fcas_playstyle = pd.read_csv("FCAS Playgroup_FCAS Playgroup.csv",skiprows=2)
+    df_fcas_playstyle = df_fcas_playstyle.rename(columns={"Animal #":"AnimalNumberPlay"})
 
-    #df_fcas_hw = df_fcas_hw[['Textbox2','Result']]
-    df_fcas_hw = df_fcas_hw[['Animal #','Result']]
-    df_fcas =pd.merge(df_fcas,df_fcas_hw, how='left',right_on='Animal #',left_on='AnimalNumber')
-    df_fcas =pd.merge(df_fcas,df_fcas_rabies, how='left',right_on='Animal #',left_on='AnimalNumber')
-    #df_fcas_foster = df_fcas_foster[['textbox9','FosterReason']]
-    df_fcas_foster = df_fcas_foster[['Animal #','FosterReason']]
-    df_fcas =pd.merge(df_fcas,df_fcas_foster, how='left',right_on='Animal #',left_on='AnimalNumber')
-    df_fcas_url = df_fcas_url[['Animal #','ShortURL']]
-    df_fcas =pd.merge(df_fcas,df_fcas_url, how='left',right_on='Animal #',left_on='AnimalNumber')
-    # df_fcas_hold = df_fcas_hold[['textbox67','textbox15']]
-    df_fcas_hold = df_fcas_hold[['Animal #','HoldReason']]
-    #df_fcas_hold = df_fcas_hold.rename(columns={"textbox15":"HoldReason"})
-    #df_fcas_hold["HoldReason"] = df_fcas_hold["HoldReason"].str[1:]
-    df_fcas =pd.merge(df_fcas,df_fcas_hold, how='left',right_on='Animal #',left_on='AnimalNumber')
-    df_fcas =pd.merge(df_fcas,dog_test, how='left',right_on='Animal #',left_on='AnimalNumber')
-    df_fcas =pd.merge(df_fcas,playgroup, how='left',right_on='Animal #',left_on='AnimalNumber')
-    df_fcas =pd.merge(df_fcas,behavior, how='left',right_on='Animal #',left_on='AnimalNumber')
-    df_fcas =pd.merge(df_fcas,homenotes, how='left',right_on='Animal #',left_on='AnimalNumber')
+    # Concatenate and clean all csv data to create master file
+    df_fcas_playstyle = df_fcas_playstyle[['AnimalNumberPlay','PlayStyle']]
+    df_fcas =pd.merge(df_fcas, df_fcas_playstyle, how="left", right_on="AnimalNumberPlay", left_on="AnimalNumber")
+    df_fcas_hw = df_fcas_hw[['AnimalNumberHW','Result']]
+    df_fcas =pd.merge(df_fcas, df_fcas_hw, how="left", right_on="AnimalNumberHW", left_on="AnimalNumber")
+    df_fcas =pd.merge(df_fcas, df_fcas_rabies, how="left", right_on="AnimalNumberRabies", left_on="AnimalNumber")
+    df_fcas_foster = df_fcas_foster[['AnimalNumberFoster','FosterReason']]
+    df_fcas =pd.merge(df_fcas,df_fcas_foster, how='left',right_on="AnimalNumberFoster",left_on='AnimalNumber')
+    df_fcas_url = df_fcas_url[['AnimalNumberURL','ShortURL']]
+    df_fcas =pd.merge(df_fcas,df_fcas_url, how='left',right_on='AnimalNumberURL',left_on='AnimalNumber')
+    df_fcas_hold = df_fcas_hold[['AnimalNumberHold','HoldReason']]
+    df_fcas =pd.merge(df_fcas,df_fcas_hold, how='left',right_on='AnimalNumberHold',left_on='AnimalNumber')
+    df_fcas =pd.merge(df_fcas,dog_test, how='left',right_on='AnimalNumberDT',left_on='AnimalNumber')
+    df_fcas =pd.merge(df_fcas,playgroup, how='left',right_on='AnimalNumberPG',left_on='AnimalNumber')
+    df_fcas =pd.merge(df_fcas,behavior, how='left',right_on='AnimalNumberBehavior',left_on='AnimalNumber')
+    df_fcas =pd.merge(df_fcas,homenotes, how='left',right_on='AnimalNumberHome',left_on='AnimalNumber')
     df_fcas['Location'] = df_fcas['Location'] + ' ' + df_fcas['SubLocation']
-    # df_fcas['Color'] = df_fcas[['Color', 'ColorPattern', 'PrimaryBreed', 'SecondaryBreed']].agg(' '.join, axis=1)
-    #df_fcas[['AnimalWeight', 'Pounds']] = df_fcas['AnimalWeight'].str.split('.', n=1, expand=True)
     df_fcas[['IntakeDate', 'Time']] = df_fcas['IntakeDateTime'].str.split(' ', n=1, expand=True)
     df_fcas[['DateOfBirth', 'Time2']] = df_fcas['DateOfBirth'].str.split(' ', n=1, expand=True)
     df_fcas[['ExpirationDate', 'Time3']] = df_fcas['ExpirationDate'].str.split(' ', n=1, expand=True)
     df_fcas.to_csv("DF_FCAS_nonreduced.csv")
-    df_fcas = df_fcas.drop(columns=['SubLocation','Time','Time2','Time3','Animal #_x','Animal #_y', 'Animal #_x','Animal #_y', 'Animal #_x','Animal #_y', 'Animal #_x','Animal #_y'])
+    df_fcas = df_fcas.drop(columns=['SubLocation','Time','Time2','Time3',"AnimalNumberDT",'AnimalNumberPlay', "AnimalNumberBehavior","AnimalNumberHome","AnimalNumberHold","AnimalNumberFoster","AnimalNumberHW","AnimalNumberRabies","AnimalNumberURL","AnimalNumberPG"])
     print(df_fcas['AnimalWeight'].dtypes)
     df_fcas['AnimalWeight'] = np.floor(pd.to_numeric(df_fcas['AnimalWeight'], errors='coerce')).astype('Int64')
-    #df_fcas['AnimalWeight'] = df_fcas['AnimalWeight'].astype('Int64')
     df_fcas['AnimalWeight'] = df_fcas['AnimalWeight'].fillna(0)
     df_fcas = df_fcas.loc[df_fcas['AnimalType']=='Dog']
     df_fcas = df_fcas.loc[~(df_fcas.Location.str.contains('Fridge', na=False))]
@@ -241,9 +230,6 @@ def pandatime():
     df_fcas.loc[df_fcas.ARN.str.contains('Staff', na=False), 'Level'] = "STAFF ONLY"
     df_fcas.loc[df_fcas.ARN.str.contains('STAFF', na=False), 'Level'] = "STAFF ONLY"
     df_fcas.loc[df_fcas.ARN.str.contains('staff', na=False), 'Level'] = "STAFF ONLY"
-    #df_fcas.loc[(df_fcas.Sex == 'M') & (df_fcas.SpayedNeutered == 'Y'), 'Sex'] = "N"
-    #df_fcas.loc[(df_fcas.Sex == 'F') & (df_fcas.SpayedNeutered == 'Y'), 'Sex'] = "S"
-    #df_fcas = df_fcas.replace({np.nan:None})
     print('PetPoint Level Type:')
     print(df_fcas['Level'].dtypes)
     print('PetPoint HW Type:')
@@ -289,7 +275,7 @@ def comb_dfs(df_asana,df_fcas,gid_dict):
     # pathways = pathways.loc[~(pathways.Location_x.str.contains('Foster', na=False))]
     # pathways.to_csv("Pathways.csv")
 
-    rtf = matching_fcas_inv_correct.loc[matching_fcas_inv_correct['Stage'] == 'Available']
+    rtf = matching_fcas_inv_correct.loc[(matching_fcas_inv_correct["Stage"] == "Available") | (matching_fcas_inv_correct["Stage"] == "Priority")]
     rtf = rtf.loc[(rtf['ExpirationDate'].notna())]
     rtf = rtf.loc[(rtf['MicrochipNumber'].notna())]
     rtf.to_csv("RTF.csv")
@@ -510,6 +496,55 @@ def rtf_df ():
 
     return [df_rtf_database,gid_dict,df_membership]
 
+def playgroup_df ():
+    setClientWithToken(client)
+    (url, state) = client.session.authorization_url()
+    print("authorized=", client.session.authorized)
+    tasks = client.tasks.get_tasks_for_project(dictionary['projects']['playgroup']['gid'],{'is_subtask':False,'opt_fields' : ['custom_fields.name', 'custom_fields.display_value','completed', 'name', 'permalink_url', 'created_at','memberships.section.name', 'memberships.section.project.name' ]})
+    projectmap={}
+    pp = pprint.PrettyPrinter(indent=2)
+    column_titles = ['gid']
+    gid_dict ={}
+    row_df =[]
+    counter =True
+    
+    for r in tasks:
+        row_list=[r['gid']]
+        len_cols = dictionary['variables']['lenwname']
+        for x in r['custom_fields']:
+            if(counter):
+                gid_dict[x['name']]=x['gid']
+                column_titles.append(x['name'])
+            row_list.append(x['display_value'])
+        row_list.append(r['completed'])
+        row_list.append(r['name'])
+        temp_member_list = {}
+        df_membership[r['gid']]=r['memberships']
+        #print(row_list)
+        #print(len(row_list))
+        if(counter):
+            column_titles.append("completed")
+            column_titles.append("name")
+        if len(row_list)==dictionary['variables']['lenwname']:
+            row_df.append(row_list)
+            counter=False
+        else:
+            # print(row_list)
+            if(counter ==True):
+                column_titles=['gid']   
+    print(len(column_titles))
+    counter=0
+    for x in row_df:
+        if(len(x)>dictionary['variables']['lenwname']):           
+            print(counter)
+            print(row_df[counter])
+            row_df.pop(counter)
+        counter+=1
+    df_pg_database = pd.DataFrame(row_df,columns=column_titles)
+    df_pg_database.to_csv("Playgroup_dataframe.csv")
+
+    return [df_pg_database,gid_dict,df_membership]
+
 def walk_df ():
     setClientWithToken(client)
     (url, state) = client.session.authorization_url()
@@ -580,13 +615,11 @@ def content_df ():
     
     resulte = client.tasks.search_tasks_for_workspace('1176075726005695', {'sections.any' : '1203768968883583', 'limit':50, 'completed':False, 'is_subtask':False, 'opt_fields' : ['completed', 'name']}, opt_pretty=True)
     resultsp = client.tasks.search_tasks_for_workspace('1176075726005695', {'sections.any' : '1201146133267433', 'limit':50, 'completed':False, 'is_subtask':False, 'opt_fields' : ['completed', 'name']}, opt_pretty=True)
-    resultr = client.tasks.search_tasks_for_workspace('1176075726005695', {'sections.any' : '1202891465434971', 'limit':50, 'completed':False, 'is_subtask':False, 'opt_fields' : ['completed', 'name']}, opt_pretty=True)
+    
     info = []
     for dog in resulte:
         info.append(dog['gid'])
     for dog in resultsp:
-        info.append(dog['gid'])
-    for dog in resultr:
         info.append(dog['gid'])
 
     for r in tasks:
@@ -826,7 +859,10 @@ def updatewalk(gid,options):
         section ={'project':dictionary['projects']['walk']['gid'],'section':dictionary['projects']['walk']['sections']['Q']}
     else:
         section ={'project':dictionary['projects']['walk']['gid'],'section':dictionary['projects']['walk']['sections']['Other']}
+    print(gid)
+    print(section)
     meh_result = client.tasks.add_project_for_task(gid, section, opt_pretty=True)
+    print(meh_result)
 
     if 'Foster' in (options['custom_fields'][dictionary['fields']['Location']['gid']]):
         client.tasks.update_task(gid, {"completed":True}, opt_pretty=True)
@@ -983,16 +1019,47 @@ def foster (df):
     df=df.loc[df['completed']==False]
 
     for row in df.index:
-        #print(df['name'][row])
+        print(df['name'][row])
         if 'Foster' not in (df['Location'][row]):
             result = client.tasks.remove_project_for_task(df['gid'][row], {'project': dictionary['projects']['foster']['gid']}, opt_pretty=True)
             continue
         elif (df['Current Status'][row]) == 'Court':
             section ={'project':dictionary['projects']['foster']['gid'],'section':dictionary['projects']['foster']['sections']['LEF']}
         else:
-            section ={'project':dictionary['projects']['foster']['gid'],'section':dictionary['projects']['foster']['sections'][df['name'][row][0].upper()]}
+            try:
+                section ={'project':dictionary['projects']['foster']['gid'],'section':dictionary['projects']['foster']['sections'][df['name'][row][0].upper()]}
+            except:
+                continue
         meh_result = client.tasks.add_project_for_task(df['gid'][row], section, opt_pretty=True)        
     
+    return
+
+def playgroup (df1,df2):
+    pp = pprint.PrettyPrinter(indent=2)
+    df1 = df1.dropna(subset=['PlayStyle'])
+    #df1.to_csv("PGreduced.csv")
+
+    for row in df1.index:        
+        if 'Foster' in (df1['Location_x'][row]):
+            section ={'project':dictionary['projects']['playgroup']['gid'],'section':dictionary['projects']['playgroup']['sections']['Foster']}
+        elif (df1['PlayStyle'][row].startswith('Gentle')):
+            section ={'project':dictionary['projects']['playgroup']['gid'],'section':dictionary['projects']['playgroup']['sections']['Gentle']}
+        elif (df1['PlayStyle'][row].startswith('Physical')):
+            section ={'project':dictionary['projects']['playgroup']['gid'],'section':dictionary['projects']['playgroup']['sections']['Physical']}
+        elif (df1['PlayStyle'][row].startswith('Little')):
+            section ={'project':dictionary['projects']['playgroup']['gid'],'section':dictionary['projects']['playgroup']['sections']['Cafe']}
+        elif (df1['PlayStyle'][row].startswith('No P')):
+            section ={'project':dictionary['projects']['playgroup']['gid'],'section':dictionary['projects']['playgroup']['sections']['NoPG']}
+        elif (df1['PlayStyle'][row].startswith('Tag')):
+            section ={'project':dictionary['projects']['playgroup']['gid'],'section':dictionary['projects']['playgroup']['sections']['Tag']}
+        elif (df1['PlayStyle'][row].startswith('Seek')):
+            section ={'project':dictionary['projects']['playgroup']['gid'],'section':dictionary['projects']['playgroup']['sections']['Seek']}
+        elif (df1['PlayStyle'][row].startswith('1:1')):
+            section ={'project':dictionary['projects']['playgroup']['gid'],'section':dictionary['projects']['playgroup']['sections']['1:1']}
+        else:
+            section ={'project':dictionary['projects']['playgroup']['gid'],'section':dictionary['projects']['playgroup']['sections']['Pending']}
+        result = client.tasks.add_project_for_task(df1['gid'][row], section, opt_pretty=True)
+
     return
 
 def create_new(df):
@@ -1548,7 +1615,7 @@ def main():
         dfs = comb_dfs(lists[0],pand[0],lists[1])
         # tags = assigntags(dfs[0])
         # result = create_new_enum(pand[0])
-        # # new_add = create_new(dfs[1])
+        # new_add = create_new(dfs[1])
         # out=remove_old(dfs[4],dfs[5])
         # intake_ol = bring_back_old(dfs[3]) 
         # update = update_existing(dfs[0])
@@ -1564,6 +1631,8 @@ def main():
         # readytofoster = rtf(dfs[8],oldrtf[0])
         # fosdf = foster_df()
         # fos = foster(fosdf[0])
+        # pgdf = playgroup_df()
+        # pgupdate = playgroup(dfs[0],pgdf[0])
         # attach = attachments()
         # dfsa = comb_pics(attach[0],pand[0],attach[1])
         # picts = pictures(dfsa[0],pand[0])

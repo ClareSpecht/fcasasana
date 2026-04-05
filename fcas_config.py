@@ -97,11 +97,25 @@ def dictionary():
                     'LEF' : '1201449344168314'
                 },
             },
+            "playgroup":{
+                "gid" : "1210050524906271",
+                "sections":{
+                    'Pending':'1210050528817855',
+                    'Cafe':'1210050524906272',
+                    'Gentle' : '1210050524906274',
+                    'Tag' : '1210050528817849',
+                    'Physical' : '1210050528817850',
+                    'Seek' : '1210050528817851',
+                    '1:1' : '1212725323125917',
+                    'NoPG' : '1210050528817853',
+                    'Foster' : '1210051206504264'
+                },
+            },
         },
         "variables":{
-            'len_cols':33,
-            'lenwname':34,
-            'len_walk':35
+            'len_cols':34,
+            'lenwname':35,
+            'len_walk':36
         },
         'emails':{ 
             "query":[["from:PetPoint Reporting Scheduler  subject: 'FCAS Inventory' newer_than:1d ",'FCAS Inventory_FCAS Inventory.csv'],["from:PetPoint Reporting Scheduler  subject: 'FCAS Behavior' newer_than:1d ",'FCAS Behavior_FCAS Behavior.csv'],
@@ -120,24 +134,24 @@ def dictionary():
             "df_switch":{
                         'AnimalNumber': "Animal ID",
                         'Stage':"Current Status", 'DateOfBirth':"DOB", 'ARN':'Level Reason', 'ColorAndBreed':'Color & Breed', 'ExpirationDate':'Rabies Revaccination Date',
-                        'AnimalWeight':"Weight", 'Result':"HW", 'FosterReason':'Foster Start Reason', 'HoldReason': 'Hold', 'MicrochipNumber':'Microchip ID',
+                        'AnimalWeight':"Weight", 'Result':"HW", 'FosterReason':'Foster Start Reason',"PlayStyle":'Play Style','HoldReason': 'Hold', 'MicrochipNumber':'Microchip ID',
                         "DogTest":"\"Dog Test\" Notes", "Behavior":"Behavior Notes", "PlayGroup":"Playgroup Notes", 'HomeNotes':"Foster/Home Notes", 'ShortURL':'Short URL'
                         },
             "df_fields_keep":[
                 'AnimalNumber', 'AnimalName',  'Age', 'ARN', 'ColorAndBreed',
                 'Location', 'DateOfBirth', 'Stage', 'ShortURL', 'ExpirationDate',
                 'AnimalWeight', 'Level', 'Sex', 'MicrochipNumber',
-                "IntakeDate", 'Result', 'FosterReason', 'HoldReason'
+                "IntakeDate", 'Result', 'FosterReason', 'HoldReason', 'PlayStyle'
             ]
             },
         "update_existing":{
-            'update_fields':['AnimalWeight','Age_x', 'ColorAndBreed','ShortURL','MicrochipNumber','ExpirationDate','ARN', 'Location_x', 'Stage', 'Level_x', 'Sex_x', 'Result','FosterReason','HoldReason','DogTest','PlayGroup','Behavior','HomeNotes'],
-            'df_fields_keep':['gid','AnimalWeight','Age_x','ColorAndBreed','ShortURL','MicrochipNumber','ExpirationDate','ARN','Location_x','AnimalName', 'Stage', 'FosterReason', 'HoldReason', 'Level_x', 'Sex_x', 'Result','DogTest','PlayGroup','Behavior','HomeNotes'],
+            'update_fields':['AnimalWeight','Age_x', 'ColorAndBreed','ShortURL','MicrochipNumber','ExpirationDate','ARN', 'Location_x', 'Stage', 'Level_x', 'Sex_x', 'Result','FosterReason','PlayStyle','HoldReason','DogTest','PlayGroup','Behavior','HomeNotes'],
+            'df_fields_keep':['gid','AnimalWeight','Age_x','ColorAndBreed','ShortURL','MicrochipNumber','ExpirationDate','ARN','Location_x','AnimalName', 'Stage', 'FosterReason','PlayStyle', 'HoldReason', 'Level_x', 'Sex_x', 'Result','DogTest','PlayGroup','Behavior','HomeNotes'],
             "df_switch":{ 
                     'AnimalNumber': "Animal ID", 'ColorAndBreed':'Color & Breed',
                     'DateOfBirth':"DOB", 'MicrochipNumber':'Microchip ID', 'ExpirationDate':'Rabies Revaccination Date',
                     'AnimalWeight':"Weight", "Age_x":"Age", 'ARN':'Level Reason',
-                    "Location_x":"Location", "Level_x":"Level", 'ShortURL':'Short URL',
+                    "Location_x":"Location", "Level_x":"Level", 'ShortURL':'Short URL', "PlayStyle":'Play Style',
                     'Stage' : 'Current Status', 'Sex_x' : 'Sex', 'Result':"HW", 'FosterReason':'Foster Start Reason', 'HoldReason':'Hold',
                     "DogTest":"\"Dog Test\" Notes", "Behavior":"Behavior Notes","PlayGroup":"Playgroup Notes", 'HomeNotes':"Foster/Home Notes"
                     },
@@ -174,11 +188,12 @@ def dictionary():
            'df_fields_keep':'gid' 
          },
          "enum":{
-            "df_fields_keep":["Stage","HoldReason", "FosterReason"],
+            "df_fields_keep":["Stage","HoldReason", "FosterReason","PlayStyle"],
             'df_switch':{
                 "Stage":"Current Status",
                 "HoldReason" : "Hold",
-                'FosterReason':'Foster Start Reason'
+                'FosterReason':'Foster Start Reason',
+                "PlayStyle":'Play Style'
             }
          },
         "fields":""
